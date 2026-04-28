@@ -204,7 +204,12 @@
         <label>Establecimiento (EESS):</label>
         <select id="filtroEESS">
             <option value="TODOS">-- TODOS LOS EESS --</option>
-            </select>
+        </select>
+
+        <label>Consultorio:</label>
+        <select id="filtroConsultorio">
+            <option value="TODOS">-- TODOS LOS CONSULTORIOS --</option>
+        </select>
 
         <button class="btn-main" onclick="cargarExcel()">Mostrar Listado</button>
     </div>
@@ -219,19 +224,30 @@
     let pacientesGlobal = [];
     let indiceActual = 0;
 
-    // Cargar los EESS al iniciar la página para llenar el filtro
+    // Cargar los EESS y Consultorios al iniciar la página
     window.onload = function() {
         Papa.parse(URL_CSV, {
             download: true,
             header: true,
             complete: function(res) {
+                // Llenar filtro EESS
                 const selectEESS = document.getElementById('filtroEESS');
                 const eessUnicos = [...new Set(res.data.map(p => p.EESS).filter(Boolean))];
-                eessUnicos.forEach(eess => {
+                eessUnicos.sort().forEach(eess => {
                     let opt = document.createElement('option');
                     opt.value = eess;
                     opt.innerHTML = eess;
                     selectEESS.appendChild(opt);
+                });
+
+                // Llenar filtro CONSULTORIO
+                const selectCons = document.getElementById('filtroConsultorio');
+                const consUnicos = [...new Set(res.data.map(p => p.CONSULTORIO).filter(Boolean))];
+                consUnicos.sort().forEach(c => {
+                    let opt = document.createElement('option');
+                    opt.value = c;
+                    opt.innerHTML = c;
+                    selectCons.appendChild(opt);
                 });
             }
         });
@@ -242,6 +258,7 @@
         const fFin = document.getElementById('fechaFin').value;
         const turnoSeleccionado = document.getElementById('filtroTurno').value;
         const eessSeleccionado = document.getElementById('filtroEESS').value;
+        const consultorioSeleccionado = document.getElementById('filtroConsultorio').value;
 
         if (!fInicio || !fFin) {
             alert("Por favor, selecciona un rango de fechas.");
@@ -264,8 +281,9 @@
                     const cumpleFecha = fechaPaciente >= dInicio && fechaPaciente <= dFin;
                     const cumpleTurno = (turnoSeleccionado === "TODOS") || (p.TURNO.trim() === turnoSeleccionado);
                     const cumpleEESS = (eessSeleccionado === "TODOS") || (p.EESS === eessSeleccionado);
+                    const cumpleCons = (consultorioSeleccionado === "TODOS") || (p.CONSULTORIO === consultorioSeleccionado);
 
-                    return cumpleFecha && cumpleTurno && cumpleEESS;
+                    return cumpleFecha && cumpleTurno && cumpleEESS && cumpleCons;
                 });
                 indiceActual = 0;
                 mostrarLista();
@@ -289,7 +307,7 @@
                 <div class="info">
                     <b>${p.NOMBRE}</b>
                     <span>📅 ${p['FECHA DE CITA']} | ⏰ ${p.TURNO}</span>
-                    <span style="font-size:10px; color:var(--dark); font-weight:bold;">📍 ${p.EESS} - ${p.CONSULTORIO}</span>
+                    <span style="font-size:10px; color:var(--dark); font-weight:bold;">📍 ${p.EESS} - CONS: ${p.CONSULTORIO}</span>
                     ${esHoy ? '<span class="hoy-badge">CITA PARA HOY</span>' : ''}
                 </div>
                 <a href="#" class="btn-send" onclick="enviarIndividual(${i})">ENVIAR</a>
@@ -316,8 +334,8 @@
         const esHoy = (p['FECHA DE CITA'].trim() === hoyStr);
         const fechaTxt = esHoy ? "*HOY*" : `el *${p['FECHA DE CITA']}*`;
         
-        // Mensaje personalizado con el EESS
-        const msg = `Le saludo del Centro de Salud *${p.EESS}*, mamita de *${p.NOMBRE}*, se le recuerda la cita CRED para el ${fechaTxt} en el turno *${p.TURNO}*. Por favor, no falte: Invitarle tambien a nuestro sistema de RECUERDA CITAS CRED, para eso deberá registrar tus datos por el link https://confianzaseguridad772-max.github.io/GeoBoyGirl/, lo mas importe active la ubicación de celular antes de registrarse.`;
+        // Mensaje personalizado con EESS y CONSULTORIO
+        const msg = `Le saludo del Centro de Salud *${p.EESS}*, mamita de *${p.NOMBRE}*, se le recuerda la cita CRED para el ${fechaTxt} en el turno *${p.TURNO}* en el *CONSULTORIO: ${p.CONSULTORIO}*. Por favor, no falte. También le invitamos a nuestro sistema de RECUERDA CITAS CRED, registrando sus datos aquí: https://confianzaseguridad772-max.github.io/GeoBoyGirl/. Importante: active su ubicación antes de registrarse.`;
         
         return `https://api.whatsapp.com/send?phone=51${p.CELULAR.trim()}&text=${encodeURIComponent(msg)}`;
     }
