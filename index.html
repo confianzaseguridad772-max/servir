@@ -335,7 +335,7 @@
         const fechaTxt = esHoy ? "*HOY*" : `el *${p['FECHA DE CITA']}*`;
         
         // Mensaje personalizado con EESS y CONSULTORIO
-        const msg = `Le saludo del Centro de Salud *${p.EESS}*, mamita de *${p.NOMBRE}*, se le recuerda la cita CRED para el ${fechaTxt} en el turno *${p.TURNO}* en el *CONSULTORIO: ${p.CONSULTORIO}*. Por favor, no falte. También le invitamos a nuestro sistema de RECUERDA CITAS CRED, registrando sus datos aquí: https://confianzaseguridad772-max.github.io/GeoBoyGirl/. Importante: active su ubicación antes de registrarse.`;
+        const msg = `Le saludo del Centro de Salud *${p.EESS}*, mamita de *${p.NOMBRE}*, se le recuerda la cita CRED para el ${fechaTxt} en el turno *${p.TURNO}* en el *CONSULTORIO: ${p.CONSULTORIO}*. Por favor, no falte. También le invitamos a nuestro sistema de RECUERDA CITAS CRED, registrando sus datos aquí: https://desarrolloinfantiltemprano-dit.github.io/casita/ Importante: active su ubicación antes de registrarse. Para recibir las actualizaciones de talleres, consultas especializadas a favor de su niño, se parte de nuestro grupo de whatsapp: https://chat.whatsapp.com/FELCvT889zo265G8LkVkPY`;
         
         return `https://api.whatsapp.com/send?phone=51${p.CELULAR.trim()}&text=${encodeURIComponent(msg)}`;
     }
