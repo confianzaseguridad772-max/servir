@@ -11,6 +11,7 @@
             --wa: #25D366; 
             --accent: #00a884;
             --glass: rgba(255, 255, 255, 0.9);
+            --error: #ef5350;
         }
 
         body { 
@@ -96,7 +97,7 @@
             text-transform: uppercase;
         }
 
-        .filtros input, .filtros select { 
+        .filtros input, .filtros select, .extra-msg { 
             padding: 12px; 
             margin-top: 5px; 
             width: 100%; 
@@ -105,6 +106,12 @@
             box-sizing: border-box; 
             font-size: 14px;
             transition: 0.3s;
+        }
+
+        .extra-msg {
+            resize: none;
+            font-family: inherit;
+            background: white;
         }
 
         .btn-main { 
@@ -155,7 +162,7 @@
         .info span { font-size: 12px; color: #777; display: block; margin-top: 2px; }
         
         .hoy-badge { 
-            background: #ef5350; 
+            background: var(--error); 
             color: white; 
             padding: 3px 8px; 
             border-radius: 6px; 
@@ -163,6 +170,13 @@
             font-weight: bold; 
             margin-top: 6px; 
             display: inline-block; 
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-end;
         }
 
         .btn-send { 
@@ -173,6 +187,26 @@
             border-radius: 30px; 
             font-size: 12px; 
             font-weight: bold; 
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .btn-no-wa {
+            background: #f4f4f4;
+            color: #666;
+            border: 1px solid #ddd;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-no-wa:hover {
+            background: var(--error);
+            color: white;
+            border-color: var(--error);
         }
 
         #lista { max-height: 400px; overflow-y: auto; padding-right: 5px; }
@@ -211,6 +245,9 @@
             <option value="TODOS">-- TODOS LOS CONSULTORIOS --</option>
         </select>
 
+        <label>Mensaje Adicional para todos:</label>
+        <textarea id="msgAdicional" class="extra-msg" rows="2" placeholder="Ej: Traer carnet físico y DNI del menor..."></textarea>
+
         <button class="btn-main" onclick="cargarExcel()">Mostrar Listado</button>
     </div>
     
@@ -221,16 +258,16 @@
 
 <script>
     const URL_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT-kCdER9NTPl29MALvc5Bam5N-UniBAH-OqP5GusOdT9wbJyQ5XQs-Qt66L6ds9ZxW1sUtZ9L7z4pW/pub?gid=0&single=true&output=csv';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbye8k93u2HrGI6Y_LwD_4PVG7n-sGT49BD9CRoD-JuBAInplvX-yJ1jdnKJFPosLwM/exec'; // <--- PEGA TU URL DE GOOGLE SCRIPT AQUÍ
+    
     let pacientesGlobal = [];
     let indiceActual = 0;
 
-    // Cargar los EESS y Consultorios al iniciar la página
     window.onload = function() {
         Papa.parse(URL_CSV, {
             download: true,
             header: true,
             complete: function(res) {
-                // Llenar filtro EESS
                 const selectEESS = document.getElementById('filtroEESS');
                 const eessUnicos = [...new Set(res.data.map(p => p.EESS).filter(Boolean))];
                 eessUnicos.sort().forEach(eess => {
@@ -240,7 +277,6 @@
                     selectEESS.appendChild(opt);
                 });
 
-                // Llenar filtro CONSULTORIO
                 const selectCons = document.getElementById('filtroConsultorio');
                 const consUnicos = [...new Set(res.data.map(p => p.CONSULTORIO).filter(Boolean))];
                 consUnicos.sort().forEach(c => {
@@ -310,7 +346,10 @@
                     <span style="font-size:10px; color:var(--dark); font-weight:bold;">📍 ${p.EESS} - CONS: ${p.CONSULTORIO}</span>
                     ${esHoy ? '<span class="hoy-badge">CITA PARA HOY</span>' : ''}
                 </div>
-                <a href="#" class="btn-send" onclick="enviarIndividual(${i})">ENVIAR</a>
+                <div class="actions">
+                    <a href="#" class="btn-send" onclick="enviarIndividual(${i})">ENVIAR</a>
+                    <button class="btn-no-wa" onclick="reportarError(${i})">❌ NO WA</button>
+                </div>
             `;
             div.appendChild(item);
         });
@@ -334,8 +373,10 @@
         const esHoy = (p['FECHA DE CITA'].trim() === hoyStr);
         const fechaTxt = esHoy ? "*HOY*" : `el *${p['FECHA DE CITA']}*`;
         
-        // Mensaje personalizado con EESS y CONSULTORIO
-        const msg = `Le saludo del Centro de Salud *${p.EESS}*, mamita de *${p.NOMBRE}*, se le recuerda la cita CRED para el ${fechaTxt} en el turno *${p.TURNO}* en el *CONSULTORIO: ${p.CONSULTORIO}*. Por favor, no falte. También le invitamos a nuestro sistema de RECUERDA CITAS CRED, registrando sus datos aquí: https://desarrolloinfantiltemprano-dit.github.io/casita/ Importante: active su ubicación antes de registrarse. Para recibir las actualizaciones de talleres, consultas especializadas a favor de su niño, se parte de nuestro grupo de whatsapp: https://chat.whatsapp.com/FELCvT889zo265G8LkVkPY`;
+        const extraMsg = document.getElementById('msgAdicional').value.trim();
+        const textoExtra = extraMsg ? `\n\n📌 *Nota:* ${extraMsg}` : "";
+
+        const msg = `Le saludo del Centro de Salud *${p.EESS}*, mamita de *${p.NOMBRE}*, se le recuerda la cita CRED para el ${fechaTxt} en el turno *${p.TURNO}* en el *CONSULTORIO: ${p.CONSULTORIO}*. Por favor, no falte.${textoExtra}\n\nTambién le invitamos a nuestro sistema de RECUERDA CITAS CRED: https://desarrolloinfantiltemprano-dit.github.io/casita/\nPara recibir actualizaciones, únete al grupo: https://chat.whatsapp.com/FELCvT889zo265G8LkVkPY`;
         
         return `https://api.whatsapp.com/send?phone=51${p.CELULAR.trim()}&text=${encodeURIComponent(msg)}`;
     }
@@ -346,20 +387,43 @@
         marcarComoEnviado(i);
     }
 
+    function reportarError(i) {
+        const p = pacientesGlobal[i];
+        const tarjeta = document.getElementById(`paciente-${i}`);
+        
+        // Efecto visual de carga
+        tarjeta.style.borderLeft = "10px solid var(--error)";
+        
+        fetch(`${SCRIPT_URL}?errorNum=${p.CELULAR.trim()}`, { mode: 'no-cors' })
+            .then(() => {
+                alert(`Reportado: El número de ${p.NOMBRE} se marcó como 'SIN WHATSAPP' en el Excel.`);
+                marcarComoEnviado(i, true);
+            })
+            .catch(err => alert("Error al conectar con el Excel. Verifica la URL del Script."));
+    }
+
     function marcarSiguiente() {
         marcarComoEnviado(indiceActual);
         indiceActual++;
         setTimeout(prepararSiguiente, 1000);
     }
 
-    function marcarComoEnviado(i) {
+    function marcarComoEnviado(i, isError = false) {
         const tarjeta = document.getElementById(`paciente-${i}`);
         if(tarjeta) {
-            tarjeta.style.background = "#f0f0f0";
-            tarjeta.style.opacity = "0.5";
+            tarjeta.style.background = isError ? "#ffebee" : "#f0f0f0";
+            tarjeta.style.opacity = "0.6";
             const btn = tarjeta.querySelector('.btn-send');
-            btn.innerText = "✓";
-            btn.style.background = "#aaa";
+            const btnErr = tarjeta.querySelector('.btn-no-wa');
+            if(btn) btn.style.display = "none";
+            if(btnErr) btnErr.style.display = "none";
+            
+            const check = document.createElement('span');
+            check.innerHTML = isError ? "❌ Marcado" : "✅ Enviado";
+            check.style.fontSize = "12px";
+            check.style.fontWeight = "bold";
+            check.style.color = isError ? "red" : "green";
+            tarjeta.querySelector('.actions').appendChild(check);
         }
     }
 </script>
